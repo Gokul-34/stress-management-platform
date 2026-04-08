@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 
 const VoiceAssistant = ({ onCommand, currentPrediction, historicalData }) => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [recognition, setRecognition] = useState(null);
+
+  const listeningRef = useRef(false);
+  const latestProps = useRef({ currentPrediction, historicalData, onCommand });
+
+  useEffect(() => {
+    latestProps.current = { currentPrediction, historicalData, onCommand };
+  }, [currentPrediction, historicalData, onCommand]);
 
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -19,7 +26,7 @@ const VoiceAssistant = ({ onCommand, currentPrediction, historicalData }) => {
       recognitionInstance.onresult = (event) => {
         let command = event.results[0][0].transcript.toLowerCase();
 
-        // 🔧 Clean noise (important improvement)
+        // clean input
         command = command.replace(/[^a-z\s]/g, '').trim();
 
         console.log('Voice command:', command);
@@ -29,142 +36,154 @@ const VoiceAssistant = ({ onCommand, currentPrediction, historicalData }) => {
       recognitionInstance.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
-        toast.error('Could not recognize speech. Please try again.');
+        listeningRef.current = false;
+        toast.error('Mic error. Try again.');
       };
 
       recognitionInstance.onend = () => {
         setIsListening(false);
+        listeningRef.current = false;
       };
 
       setRecognition(recognitionInstance);
     } else {
-      toast.error('Your browser does not support voice commands');
+      toast.error('Voice not supported in this browser');
     }
   }, []);
 
+  // 🔊 Text to speech
   const speak = (text) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
 
       setIsSpeaking(true);
+
       const utterance = new SpeechSynthesisUtterance(text);
+      // Save reference to prevent garbage collection on some browsers
+      window._activeUtterance = utterance;
+
       utterance.rate = 0.9;
       utterance.pitch = 1;
 
-      utterance.onend = () => {
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = (e) => {
+        console.error('Speech synthesis error:', e);
         setIsSpeaking(false);
-      };
-
-      utterance.onerror = () => {
-        setIsSpeaking(false);
-        toast.error('Failed to speak response');
+        // Only show error if it's not a deliberate cancel/interruption
+        if (e.error !== 'interrupted' && e.error !== 'canceled') {
+          toast.error('Speech failed');
+        }
       };
 
       window.speechSynthesis.speak(utterance);
     } else {
-      toast.error('Your browser does not support text-to-speech');
+      toast.error('Text-to-speech not supported');
     }
   };
 
-  // 🔥 SMART COMMAND PROCESSING
+  // 🧠 Command processing
   const processCommand = (command) => {
+    const { currentPrediction, historicalData, onCommand } = latestProps.current;
     let response = '';
 
-    // Helper: check if any word exists
-    const hasWords = (words) => {
-      return words.some((word) => command.includes(word));
-    };
+    const has = (words) => words.some((w) => command.includes(w));
 
-    // 🎯 CHECK STRESS (Flexible detection)
-    if (
-      (hasWords(['check', 'tell', 'what']) && hasWords(['stress'])) ||
-      hasWords(['stress level', 'my stress', 'stress status'])
-    ) {
-      if (currentPrediction && currentPrediction.stress_level) {
-        response = `Your current stress level is ${currentPrediction.stress_level}. `;
+    console.log('Processed command:', command);
 
-        if (currentPrediction.stress_level === 'low') {
+    // 🎯 CHECK STRESS
+    if (has(['stress'])) {
+      if (currentPrediction?.predicted_stress_level) {
+        const level = currentPrediction.predicted_stress_level;
+
+        response = `Your current stress level is ${level}. `;
+
+        if (level === 'low') {
           response += 'Great job keeping your stress low!';
-        } else if (currentPrediction.stress_level === 'medium') {
-          response += 'You have moderate stress. Try relaxing a bit.';
+        } else if (level === 'medium') {
+          response += 'You have moderate stress. Try to relax.';
         } else {
-          response += 'You have high stress. Please take care and follow recommendations.';
+          response += 'You have high stress. Please take care.';
         }
 
         onCommand?.('check_stress');
       } else {
-        response =
-          "You haven't analyzed your stress yet. Please submit your data first.";
+        response = 'You have not checked your stress yet.';
       }
     }
 
     // 📊 HISTORY
-    else if (hasWords(['history', 'records', 'past'])) {
+    else if (has(['history', 'records', 'past'])) {
       if (historicalData && historicalData.length > 0) {
-        const lastThree = historicalData.slice(-3);
+        const last = historicalData.slice(-3);
 
-        response = `You have ${historicalData.length} records. Last stress levels: `;
+        response = `You have ${historicalData.length} records. Recent stress levels are `;
 
-        lastThree.forEach((record, i) => {
-          response += `${record.stress_level}`;
-          if (i < lastThree.length - 1) response += ', ';
+        last.forEach((r, i) => {
+          response += r.predicted_stress_level;
+          if (i < last.length - 1) response += ', ';
         });
 
         response += '. Showing history now.';
         onCommand?.('show_history');
       } else {
-        response = 'No history available yet.';
+        response = 'No history found. Please submit data first.';
       }
     }
 
     // 💡 RECOMMENDATIONS
-    else if (hasWords(['recommend', 'suggest', 'tips'])) {
+    else if (has(['recommend', 'tips', 'suggest'])) {
       response =
-        'To reduce stress: sleep well, reduce screen time, exercise regularly, and practice breathing techniques.';
+        'To reduce stress: sleep well, reduce screen time, exercise, and take breaks.';
       onCommand?.('show_recommendations');
     }
 
     // ❓ HELP
-    else if (hasWords(['help', 'what can you do'])) {
+    else if (has(['help'])) {
       response =
-        'You can say things like: check stress, show history, or give recommendations.';
+        'You can say: check stress, show history, or give recommendations.';
     }
 
-    // ❌ UNKNOWN COMMAND
+    // ❌ UNKNOWN
     else {
       response =
-        'Sorry, I did not understand. Try saying: check stress, show history, or recommendations.';
+        'Sorry, I did not understand. Try saying check stress or show history.';
     }
 
     speak(response);
   };
 
+  // 🎤 Start listening
   const startListening = () => {
-    if (recognition) {
-      try {
-        recognition.start();
-        setIsListening(true);
-        toast.success('Listening... Speak your command');
+    if (!recognition) {
+      toast.error('Voice not supported');
+      return;
+    }
 
-        setTimeout(() => {
-          if (isListening) {
-            recognition.stop();
-            toast.error('No speech detected. Please try again.');
-          }
-        }, 5000);
-      } catch (error) {
-        console.error('Failed to start recognition:', error);
-        toast.error('Failed to start voice recognition');
-      }
-    } else {
-      toast.error('Voice assistant not supported');
+    try {
+      recognition.start();
+      setIsListening(true);
+      listeningRef.current = true;
+
+      toast.success('Listening...');
+
+      setTimeout(() => {
+        if (listeningRef.current) {
+          recognition.stop();
+          toast.error('No speech detected');
+        }
+      }, 6000);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to start mic');
     }
   };
 
+  // 🛑 Stop listening
   const stopListening = () => {
     if (recognition) {
       recognition.stop();
       setIsListening(false);
+      listeningRef.current = false;
     }
   };
 
@@ -172,49 +191,15 @@ const VoiceAssistant = ({ onCommand, currentPrediction, historicalData }) => {
     <div className="relative">
       <button
         onClick={isListening ? stopListening : startListening}
-        className={`relative group ${isListening
+        className={`${isListening
             ? 'bg-red-500 animate-pulse'
             : isSpeaking
               ? 'bg-green-500'
               : 'bg-gradient-to-r from-purple-600 to-indigo-600'
-          } text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-105`}
-        title="Voice Assistant"
+          } text-white rounded-full p-3 shadow-lg`}
       >
-        {isListening ? (
-          <span>🎤</span>
-        ) : isSpeaking ? (
-          <span>🔊</span>
-        ) : (
-          <span>🎙️</span>
-        )}
+        {isListening ? '🎤' : isSpeaking ? '🔊' : '🎙️'}
       </button>
-
-      {/* Tooltip */}
-      <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 hidden group-hover:block whitespace-nowrap">
-        <div className="bg-gray-800 text-white text-xs rounded py-1 px-2">
-          {isListening
-            ? 'Listening...'
-            : isSpeaking
-              ? 'Speaking...'
-              : 'Voice Assistant'}
-        </div>
-      </div>
-
-      {/* Status Indicator */}
-      {(isListening || isSpeaking) && (
-        <div className="absolute -top-1 -right-1">
-          <span className="relative flex h-3 w-3">
-            <span
-              className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isListening ? 'bg-red-400' : 'bg-green-400'
-                } opacity-75`}
-            ></span>
-            <span
-              className={`relative inline-flex rounded-full h-3 w-3 ${isListening ? 'bg-red-500' : 'bg-green-500'
-                }`}
-            ></span>
-          </span>
-        </div>
-      )}
     </div>
   );
 };

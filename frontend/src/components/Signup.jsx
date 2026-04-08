@@ -59,19 +59,29 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
+    <div className="min-h-screen bg-slate-50 relative selection:bg-purple-200 selection:text-purple-900 flex items-center justify-center px-4 overflow-hidden py-10">
+      {/* Decorative Background */}
+      <div className="absolute top-0 w-full h-full bg-gradient-to-b from-indigo-100/80 via-purple-50/40 to-transparent pointer-events-none -z-10"></div>
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-200/40 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-multiply flex-shrink-0"></div>
+      <div className="absolute top-40 left-0 w-[400px] h-[400px] bg-blue-200/40 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-multiply flex-shrink-0"></div>
 
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">Create Account</h2>
-          <p className="text-gray-600 mt-2">Join Stress Manager today</p>
+      <div className="max-w-md w-full bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50 p-8 md:p-10 z-10 relative">
+
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 mx-auto mb-4">
+             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+             </svg>
+          </div>
+          <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight">Create Account</h2>
+          <p className="text-gray-500 font-medium mt-1">Join FocusSync today</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Name */}
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+            <label className="block text-gray-600 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
               Full Name
             </label>
             <input
@@ -80,14 +90,14 @@ const Signup = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-              placeholder="Enter your full name"
+              className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all shadow-sm"
+              placeholder="John Doe"
             />
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+             <label className="block text-gray-600 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
               Email Address
             </label>
             <input
@@ -96,14 +106,14 @@ const Signup = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-              placeholder="Enter your email"
+              className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all shadow-sm"
+              placeholder="hello@example.com"
             />
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+            <label className="block text-gray-600 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
               Password
             </label>
             <input
@@ -112,14 +122,14 @@ const Signup = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-              placeholder="Create a password"
+              className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all shadow-sm"
+              placeholder="••••••••"
             />
           </div>
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2">
+            <label className="block text-gray-600 text-xs font-bold uppercase tracking-wider mb-2 ml-1">
               Confirm Password
             </label>
             <input
@@ -128,26 +138,27 @@ const Signup = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
-              placeholder="Confirm your password"
+              className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all shadow-sm"
+              placeholder="••••••••"
             />
           </div>
 
           {/* Submit */}
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition duration-200 disabled:opacity-50"
+             type="submit"
+             disabled={loading}
+             className="w-full relative overflow-hidden group bg-gray-900 text-white font-bold py-3.5 mt-2 rounded-xl shadow-lg transition-all duration-300 disabled:opacity-50 hover:shadow-xl hover:-translate-y-[1px]"
           >
-            {loading ? 'Sending OTP...' : 'Sign Up'}
+             <span className="relative z-10">{loading ? 'Sending Request...' : 'Sign Up'}</span>
+             <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </button>
 
         </form>
 
-        <p className="text-center text-gray-600 mt-6">
+        <p className="text-center text-gray-500 mt-8 font-medium">
           Already have an account?{' '}
-          <Link to="/login" className="text-purple-600 hover:text-purple-700 font-semibold">
-            Login
+          <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-bold transition-colors">
+            Sign In
           </Link>
         </p>
 

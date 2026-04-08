@@ -54,16 +54,31 @@ def get_user_history(
     return records
 
 
-# 🔥 NEW: Get ALL users data (for comparison graph)
-@router.get("/all", response_model=List[StressRecordResponse])
+# 🔥 UPDATED: Get ALL users data (for comparison graph)
+@router.get("/all")
 def get_all_records(db: Session = Depends(get_db)):
+
     records = (
         db.query(StressRecord)
         .order_by(StressRecord.created_at.desc())
         .all()
     )
 
-    return records
+    return [
+        {
+            "user_id": r.user_id,
+            "sleep_duration": r.sleep_duration,
+            "work_hours": r.work_hours,
+            "mood_level": r.mood_level,
+            "screen_time": r.screen_time,
+            "physical_activity": r.physical_activity,
+            "heart_rate": r.heart_rate,
+            "spo2": r.spo2,
+            "stress_level": r.predicted_stress_level,
+            "date": r.created_at.isoformat()
+        }
+        for r in records
+    ]
 
 
 # ✅ Insights (based on latest user data)
