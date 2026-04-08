@@ -1,7 +1,7 @@
 import os
 import joblib
 import numpy as np
-from schemas.stress import StressDataCreate
+from backend.schemas.stress import StressDataCreate
 
 class MLService:
     def __init__(self):

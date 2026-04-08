@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from schemas.user import UserResponse
+from backend.schemas.user import UserResponse
 
 
 # 🔐 Token returned after login

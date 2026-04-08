@@ -2,10 +2,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from api.deps import get_db, get_current_user
-from db.models import User, StressRecord
-from schemas.stress import StressDataCreate, StressRecordResponse, InsightResponse
-from services.ml_service import ml_service
+from backend.api.deps import get_db, get_current_user
+from backend.db.models import User, StressRecord
+from backend.schemas.stress import StressDataCreate, StressRecordResponse, InsightResponse
+from backend.services.ml_service import ml_service
 
 router = APIRouter(prefix="/stress", tags=["stress"])
 

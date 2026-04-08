@@ -2,8 +2,8 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from db.database import engine, Base
-from api.routes import auth, stress
+from backend.db.database import engine, Base
+from backend.api.routes import auth, stress
 
 # Create FastAPI app
 app = FastAPI()
