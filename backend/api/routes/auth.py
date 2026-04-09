@@ -44,13 +44,18 @@ def signup(user_in: UserCreate, db: Session = Depends(get_db)):
     )
 
     db.add(db_user)
-    db.commit()
 
-    # 📧 Send OTP email
-    send_otp_email(db_user.email, otp)
-    return {
-        "message": "OTP sent to your email. Please verify to continue."
-    }
+    # 📧 Send OTP email inside a try block
+    try:
+        send_otp_email(db_user.email, otp)
+        db.commit() # Only commit if email was successfully sent!
+        return {
+            "message": "OTP sent to your email. Please verify to continue."
+        }
+    except Exception as e:
+        db.rollback() # Rollback user creation
+        print("Error sending OTP email:", e)
+        raise HTTPException(status_code=500, detail="Failed to send OTP email. Please check backend logs or use a different email.")
 
 
 # ================= VERIFY OTP =================
