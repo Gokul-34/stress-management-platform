@@ -52,7 +52,7 @@ const Signup = () => {
 
     } catch (error) {
       console.error("Signup error:", error);
-      toast.error(error.error || 'Signup failed. Please try again.');
+      toast.error(error.detail || error.error || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
