@@ -5,36 +5,51 @@ from backend.schemas.stress import StressDataCreate
 
 class MLService:
     def __init__(self):
-        self.model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models", "stress_model.pkl")
+        backend_dir = os.path.dirname(os.path.dirname(__file__))
+        self.model_path = os.path.join(backend_dir, "models", "stress_model.pkl")
+        self.scaler_path = os.path.join(backend_dir, "scaler.pkl")
         self.model = None
+        self.scaler = None
         self._load_model()
 
     def _load_model(self):
         try:
-            if os.path.exists(self.model_path):
+            if os.path.exists(self.model_path) and os.path.exists(self.scaler_path):
                 self.model = joblib.load(self.model_path)
+                self.scaler = joblib.load(self.scaler_path)
             else:
-                print(f"Warning: Model not found at {self.model_path}. Using fallback mock logic.")
+                print(f"Warning: Model or scaler not found. Using fallback mock logic.")
         except Exception as e:
             print(f"Error loading model: {e}")
 
     def predict_stress_level(self, data: StressDataCreate) -> str:
-        # Prepare features in the exact expected order
+        # Padded features to 11 to match training data: 
+        # ['age', 'gender_encoded', 'sleep_duration_hours', 'avg_hr_day_bpm', 'spo2_avg_pct', 'steps', 'workout_minutes', 'workout_encoded', 'caffeine_mg', 'screen_time_min', 'mood_encoded']
         features = np.array([[
+            30, # dummy age
+            1,  # dummy gender
             data.sleep_duration,
-            data.work_hours,
-            data.mood_level,
-            data.screen_time,
-            data.physical_activity,
             data.heart_rate,
-            data.spo2
+            data.spo2,
+            data.physical_activity * 100, # mock steps
+            data.physical_activity, # mock workout minutes
+            2, # dummy workout type
+            100, # dummy caffeine
+            data.screen_time * 60, # convert hours to minutes
+            data.mood_level
         ]])
 
-        if self.model:
+        if self.model and self.scaler:
             try:
-                prediction = self.model.predict(features)[0]
-                return str(prediction)
+                scaled_features = self.scaler.transform(features)
+                prediction = self.model.predict(scaled_features)[0]
+                # Map float prediction back to categorical
+                if prediction > 66: return "High"
+                elif prediction > 33: return "Medium"
+                else: return "Low"
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 print(f"Prediction error: {e}. Falling back to mock logic.")
                 return self._mock_predict(data)
         else:
