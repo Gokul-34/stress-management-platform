@@ -24,7 +24,8 @@ const VerifyOTP = () => {
         setLoading(true);
 
         try {
-            await axios.post("http://127.0.0.1:8000/auth/verify-otp", null, {
+            const baseURL = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
+            await axios.post(`${baseURL}/auth/verify-otp`, null, {
                 params: {
                     email: email,
                     otp: otp
