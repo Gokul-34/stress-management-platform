@@ -1,7 +1,7 @@
 import urllib.request
 import json
 
-GAS_URL = "https://script.google.com/macros/s/AKfycbxJNtzrt4qD7Vck04DrZkNr7v735QSY6vrJwD8GjBtuv4GQggvAPqdDEcceSpebgIIUmw/exec"
+from backend.core.config import settings
 
 def send_otp_email(to_email: str, otp: str):
     subject = "Your OTP Code"
@@ -15,7 +15,7 @@ def send_otp_email(to_email: str, otp: str):
     
     data = json.dumps(payload).encode('utf-8')
     # Use standard library to avoid needing 'requests'
-    req = urllib.request.Request(GAS_URL, data=data, headers={'Content-Type': 'application/json'})
+    req = urllib.request.Request(settings.GAS_URL, data=data, headers={'Content-Type': 'application/json'})
 
     try:
         with urllib.request.urlopen(req) as response:
