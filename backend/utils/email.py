@@ -1,27 +1,28 @@
-import smtplib
-from email.mime.text import MIMEText
+import urllib.request
+import json
 
-EMAIL = "srigokulkrishna123@gmail.com"
-PASSWORD = "bnxydpfdxuqzqwtu" # 🔥 app password (not Gmail password)
+GAS_URL = "https://script.google.com/macros/s/AKfycbxJNtzrt4qD7Vck04DrZkNr7v735QSY6vrJwD8GjBtuv4GQggvAPqdDEcceSpebgIIUmw/exec"
 
 def send_otp_email(to_email: str, otp: str):
     subject = "Your OTP Code"
     body = f"Your OTP is: {otp}. It will expire in 5 minutes."
 
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = EMAIL
-    msg["To"] = to_email
+    payload = {
+        "to": to_email,
+        "subject": subject,
+        "body": body
+    }
+    
+    data = json.dumps(payload).encode('utf-8')
+    # Use standard library to avoid needing 'requests'
+    req = urllib.request.Request(GAS_URL, data=data, headers={'Content-Type': 'application/json'})
 
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(EMAIL, PASSWORD)
-        server.sendmail(EMAIL, to_email, msg.as_string())
-        server.quit()
-
-        print("✅ OTP sent successfully")
-
+        with urllib.request.urlopen(req) as response:
+            response_text = response.read().decode('utf-8')
+            print("✅ OTP sent successfully via Google Apps Script |", response_text)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print("❌ Email sending failed:", e)
         raise e
