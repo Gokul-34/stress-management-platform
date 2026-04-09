@@ -45,8 +45,8 @@ X_scaled = scaler.fit_transform(X)
 # 6. Train/Test Split
 X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# 7. Model Training
-model = RandomForestRegressor(n_estimators=100, random_state=42)
+# 7. Model Training (Constrained for Memory Limits)
+model = RandomForestRegressor(n_estimators=50, max_depth=15, random_state=42)
 model.fit(X_train, y_train)
 
 # 8. SAVE EVERYTHING
@@ -77,26 +77,25 @@ plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], '--r', line
 plt.xlabel('Actual Stress Score')
 plt.ylabel('Predicted Stress Score')
 plt.title('Model Accuracy: Actual vs. Predicted')
-plt.show()
+# plt.show() # Commented out to avoid blocking execution
 
-# 1. Define the parameter grid (the "settings" we want to test)
+# 1. Define a smaller parameter grid for memory constraints (Render Free Tier 512MB RAM limit)
 param_dist = {
-    'n_estimators': [100, 200, 300, 500],
-    'max_depth': [None, 10, 20, 30],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4],
-    'max_features': ['sqrt', 'log2', None]
+    'n_estimators': [30, 50, 100],
+    'max_depth': [5, 10, 15],
+    'min_samples_split': [5, 10],
+    'min_samples_leaf': [2, 4],
+    'max_features': ['sqrt', 'log2']
 }
 
 # 2. Initialize the Base Model
 rf = RandomForestRegressor(random_state=42)
 
 # 3. Initialize RandomizedSearch
-# n_iter=10 means it will try 10 random combinations (faster for deadlines)
 rf_random = RandomizedSearchCV(
     estimator=rf, 
     param_distributions=param_dist, 
-    n_iter=10, 
+    n_iter=5, 
     cv=3, 
     verbose=2, 
     random_state=42, 
